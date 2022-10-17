@@ -4,12 +4,17 @@ self.addEventListener("install", (event) => {
     // https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage
     const cache = await caches.open("static"); //name of the cache we choose
     // add content to the cache - path from sw
+    // this is like url not paths
     return cache.addAll([
+      "/",
       "/src/js/",
       "/src/css/",
-      "/src/images/",
+      "/src/images/main-image.jpg",
       "/favicon.ico",
       "/index.html",
+      "https://fonts.googleapis.com/css?family=Roboto:400,700", // pre cache fonts
+      "https://fonts.googleapis.com/icon?family=Material+Icons",
+      "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
     ]);
   };
 
