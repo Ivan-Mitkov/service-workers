@@ -10,6 +10,5 @@ self.addEventListener("activate", function (e) {
 
 // triggered by web app
 self.addEventListener("fetch", (e) => {
-  console.log("[fetching]", e);
   e.respondWith(fetch(e.request));
 });
