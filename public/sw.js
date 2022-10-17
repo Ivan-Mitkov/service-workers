@@ -1,6 +1,20 @@
 // triggered by web browser
-self.addEventListener("install", function (e) {
-  console.log("[servisce worker install]", e);
+self.addEventListener("install", (event) => {
+  const preCache = async () => {
+    // https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage
+    const cache = await caches.open("static"); //name of the cache we choose
+    // add content to the cache - path from sw
+    return cache.addAll([
+      "/src/js/",
+      "/src/css/",
+      "/src/images/",
+      "/favicon.ico",
+      "/index.html",
+    ]);
+  };
+
+  //register cach async
+  event.waitUntil(preCache());
 });
 // triggered by web browser
 self.addEventListener("activate", function (e) {
@@ -10,5 +24,15 @@ self.addEventListener("activate", function (e) {
 
 // triggered by web app
 self.addEventListener("fetch", (e) => {
-  e.respondWith(fetch(e.request));
+  e.respondWith(
+    caches.match(e.request).then((response) => {
+      //if in cache return from cache
+      if (response) {
+        return response;
+        // else fetch data from net
+      } else {
+        return fetch(e.request);
+      }
+    })
+  );
 });
