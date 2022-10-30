@@ -1,4 +1,4 @@
-const CACHE_STATIC_NAME = "static-v3";
+const CACHE_STATIC_NAME = "static-v4";
 
 // triggered by web browser
 self.addEventListener("install", (event) => {
@@ -10,6 +10,7 @@ self.addEventListener("install", (event) => {
     return cache.addAll([
       "/",
       "/src/js/",
+      "/src/js/material.min.js",
       "/src/css/",
       "/src/images/main-image.jpg",
       "/favicon.ico",
@@ -53,7 +54,7 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
     //Clone is needed because put() consumes the response body
     //save a copy of the response in order not to consume it
     console.log("[URL]", event.request.url);
-    cache.put(event.request.url, response.clone());
+    // cache.put(event.request.url, response.clone());
     // return what we get from the net
     return response;
   } catch (error) {

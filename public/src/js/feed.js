@@ -32,6 +32,17 @@ shareImageButton.addEventListener("click", openCreatePostModal);
 
 closeCreatePostModalButton.addEventListener("click", closeCreatePostModal);
 
+function onSaveButtonClick(event) {
+  console.log("CLICK");
+  // if browser supports sw frontend has acces to caches
+  // may be used for example for article to be saved by the user for later reading
+  if ("caches" in window) {
+    caches.open("user-requested").then((cache) => {
+      cache.add("https://httpbin.org/get");
+      cache.add("/src/images/sf-boat.jpg");
+    });
+  }
+}
 function createCard() {
   var cardWrapper = document.createElement("div");
   cardWrapper.className = "shared-moment-card mdl-card mdl-shadow--2dp";
@@ -49,11 +60,16 @@ function createCard() {
   cardSupportingText.className = "mdl-card__supporting-text";
   cardSupportingText.textContent = "In San Francisco";
   cardSupportingText.style.textAlign = "center";
+  var cardSaveButton = document.createElement("button");
+  cardSaveButton.textContent = "SAVE";
+  cardSaveButton.addEventListener("click", onSaveButtonClick);
+  cardSupportingText.appendChild(cardSaveButton);
   cardWrapper.appendChild(cardSupportingText);
   componentHandler.upgradeElement(cardWrapper);
   sharedMomentsArea.appendChild(cardWrapper);
 }
 
+// data to be saved in dynamic cache on demand
 fetch("https://httpbin.org/get")
   .then(function (res) {
     return res.json();
