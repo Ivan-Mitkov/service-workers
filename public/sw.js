@@ -1,4 +1,4 @@
-const CACHE_STATIC_NAME = "static-v4";
+const CACHE_STATIC_NAME = "static-v5";
 
 // triggered by web browser
 self.addEventListener("install", (event) => {
@@ -15,6 +15,7 @@ self.addEventListener("install", (event) => {
       "/src/images/main-image.jpg",
       "/favicon.ico",
       "/index.html",
+      "/offline.html",
       "https://fonts.googleapis.com/css?family=Roboto:400,700", // pre cache fonts
       "https://fonts.googleapis.com/icon?family=Material+Icons",
       "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
@@ -47,19 +48,22 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
   try {
     // fetch new data
     const response = await fetch(event.request);
-    console.log("[response]", response);
+    // console.log("[response]", response);
     // create new cache and call it dynamic
     const cache = await caches.open("dynamic");
     //save a copy of the response with key url and value the response
     //Clone is needed because put() consumes the response body
     //save a copy of the response in order not to consume it
     console.log("[URL]", event.request.url);
-    // cache.put(event.request.url, response.clone());
+    cache.put(event.request.url, response.clone());
     // return what we get from the net
     return response;
   } catch (error) {
     console.log(error);
-    throw error;
+    // go to static cache and get fallout page
+    return caches
+      .open(CACHE_STATIC_NAME)
+      .then((cache) => cache.match("/offline.html"));
   }
 };
 
