@@ -1,4 +1,4 @@
-const CACHE_STATIC_NAME = "static-v5";
+const CACHE_STATIC_NAME = "static-v6";
 
 // triggered by web browser
 self.addEventListener("install", (event) => {
@@ -90,30 +90,41 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 //   );
 // });
 
-// Network with cache fallback
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        // with dynamic cache
-        // return caches.open("dynamic").then((cache) => {
-        //   cache.put(e.request.url, res.clone());
+// cache first then network
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.open("dynamic").then((cache) => {
+      return fetch(e.request).then((res) => {
+        cache.put(e.request, res.clone());
         return res;
-        // }
-        // );
-      })
-      .catch((e) => {
-        console.log("ERROR FETCHING", e);
-        return caches.open(CACHE_STATIC_NAME).then((cache) => {
-          console.log(event.request.url);
-          if (event.request.url.includes("help")) {
-            return cache.match("/offline.html");
-          }
-          return cache.match(event.request);
-        });
-      })
+      });
+    })
   );
 });
+
+// Network with cache fallback
+// self.addEventListener("fetch", (event) => {
+//   event.respondWith(
+//     fetch(event.request)
+//       .then((res) => {
+//         // with dynamic cache
+//         return caches.open("dynamic").then((cache) => {
+//           cache.put(event.request.url, res.clone());
+//           return res;
+//         });
+//       })
+//       .catch((e) => {
+//         console.log("ERROR FETCHING", e);
+//         return caches.open(CACHE_STATIC_NAME).then((cache) => {
+//           console.log(event.request.url);
+//           if (event.request.url.includes("help")) {
+//             return cache.match("/offline.html");
+//           }
+//           return cache.match(event.request);
+//         });
+//       })
+//   );
+// });
 
 // cache only
 // self.addEventListener("fetch", (e) => {

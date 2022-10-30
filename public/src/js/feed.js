@@ -43,6 +43,11 @@ function onSaveButtonClick(event) {
     });
   }
 }
+function clearCards() {
+  while (sharedMomentsArea.hasChildNodes()) {
+    sharedMomentsArea.removeChild(sharedMomentsArea.lastChild);
+  }
+}
 function createCard() {
   var cardWrapper = document.createElement("div");
   cardWrapper.className = "shared-moment-card mdl-card mdl-shadow--2dp";
@@ -70,10 +75,46 @@ function createCard() {
 }
 
 // data to be saved in dynamic cache on demand
-fetch("https://httpbin.org/get")
+// fetch("https://httpbin.org/get")
+//   .then(function (res) {
+//     return res.json();
+//   })
+//   .then(function (data) {
+//     createCard();
+//   });
+
+// Cache first then network strategy
+//url does not provide any json data it's just for example
+const url = "https://httpbin.org/get";
+let networkDataReceived = false;
+// fetch data from the net
+fetch(url)
   .then(function (res) {
     return res.json();
   })
   .then(function (data) {
+    console.log("NET data", data);
+    networkDataReceived = true;
+    clearCards();
     createCard();
   });
+// fetch data from cache
+console.log("caches" in window);
+if ("caches" in window) {
+  console.log(caches);
+  caches
+    .match(url)
+    .then((res) => {
+      if (res) {
+        return res.json();
+      }
+      return res;
+    })
+    .then((data) => {
+      console.log("From cache", data);
+      if (!networkDataReceived) {
+        clearCards();
+        createCard();
+      }
+    });
+}
