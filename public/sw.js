@@ -48,7 +48,6 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
   try {
     // fetch new data
     const response = await fetch(event.request);
-    // console.log("[response]", response);
     // create new cache and call it dynamic
     const cache = await caches.open("dynamic");
     //save a copy of the response with key url and value the response
@@ -59,7 +58,6 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
     // return what we get from the net
     return response;
   } catch (error) {
-    console.log(error);
     // go to static cache and get fallout page
     return caches
       .open(CACHE_STATIC_NAME)
@@ -68,24 +66,56 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 };
 
 // triggered by web app
-self.addEventListener("fetch", (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      //if in cache return from cache
-      if (response) {
-        return response;
-        // else fetch data from net
-      } else {
-        console.log("[HERE]");
-        return fetchAndSaveIntoDynamicCache(e);
-        //and save it into dynamic cache and return the response
-        // return fetch(e.request).then((res) => {
-        //   return caches.open("dynamic").then((cache) => {
-        //     cache.put(e.request.url, res);
-        //     return res;
-        //   });
-        // });
-      }
-    })
+
+// cache with network fallback
+// self.addEventListener("fetch", (e) => {
+//   e.respondWith(
+//     caches.match(e.request).then((response) => {
+//       //if in cache return from cache
+//       if (response) {
+//         return response;
+//         // else fetch data from net
+//       } else {
+//         console.log("[HERE]");
+//         return fetchAndSaveIntoDynamicCache(e);
+//         //and save it into dynamic cache and return the response
+//         // return fetch(e.request).then((res) => {
+//         //   return caches.open("dynamic").then((cache) => {
+//         //     cache.put(e.request.url, res.clone());
+//         //     return res;
+//         //   });
+//         // });
+//       }
+//     })
+//   );
+// });
+
+// Network with cache fallback
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        // with dynamic cache
+        // return caches.open("dynamic").then((cache) => {
+        //   cache.put(e.request.url, res.clone());
+        return res;
+        // }
+        // );
+      })
+      .catch((e) => {
+        console.log("ERROR FETCHING", e);
+        return caches.open(CACHE_STATIC_NAME).then((cache) => {
+          console.log(event.request.url);
+          if (event.request.url.includes("help")) {
+            return cache.match("/offline.html");
+          }
+          return cache.match(event.request);
+        });
+      })
   );
 });
+
+// cache only
+// self.addEventListener("fetch", (e) => {
+//   e.respondWith(caches.match(e.request).then((response) => response));
+// });
