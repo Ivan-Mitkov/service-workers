@@ -92,14 +92,31 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 
 // cache first then network
 self.addEventListener("fetch", (e) => {
-  e.respondWith(
-    caches.open("dynamic").then((cache) => {
-      return fetch(e.request).then((res) => {
-        cache.put(e.request, res.clone());
-        return res;
-      });
-    })
-  );
+  const url = "https://httpbin.org/get";
+  // used for only this url
+  if (e.request.url.indexOf(url) > -1) {
+    e.respondWith(
+      caches.open("dynamic").then((cache) => {
+        return fetch(e.request).then((res) => {
+          cache.put(e.request, res.clone());
+          return res;
+        });
+      })
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then((response) => {
+        //if in cache return from cache
+        if (response) {
+          return response;
+          // else fetch data from net
+        } else {
+          console.log("[HERE]");
+          return fetchAndSaveIntoDynamicCache(e);
+        }
+      })
+    );
+  }
 });
 
 // Network with cache fallback
