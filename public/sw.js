@@ -26,6 +26,23 @@ self.addEventListener("install", (event) => {
   event.waitUntil(preCache());
 });
 
+//function for removing old items in cache
+async function trimCache(cacheName, maxItems) {
+  // caches.open(cacheName).then((cache) =>
+  //   cache.keys().then((keys) => {
+  //     if (keys.length > maxItems) {
+  //       cache.delete(keys[0]).then(trimCache(cacheName, maxItems));
+  //     }
+  //   })
+  // );
+  console.log("STOP recursion");
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    await cache.delete(keys[0]);
+    await trimCache(cacheName, maxItems);
+  }
+}
 // triggered by web browser
 self.addEventListener("activate", function (e) {
   console.log("[servisce worker activate]", e);
@@ -50,10 +67,13 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
     const response = await fetch(event.request);
     // create new cache and call it dynamic
     const cache = await caches.open("dynamic");
+    console.log("fetchAndSaveIntoDynamicCache", cache);
     //save a copy of the response with key url and value the response
     //Clone is needed because put() consumes the response body
     //save a copy of the response in order not to consume it
     console.log("[URL]", event.request.url);
+    // delete oldest cached items
+    trimCache("dynamic", 10);
     cache.put(event.request.url, response.clone());
     // return what we get from the net
     return response;
@@ -104,6 +124,8 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       caches.open("dynamic").then((cache) => {
         return fetch(e.request).then((res) => {
+          // delete oldest cached items
+          trimCache("dynamic", 10);
           cache.put(e.request, res.clone());
           return res;
         });
