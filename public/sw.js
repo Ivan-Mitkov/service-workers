@@ -60,7 +60,10 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
   } catch (error) {
     // go to static cache and get fallout page
     return caches.open(CACHE_STATIC_NAME).then((cache) => {
-      if (event.request.url.includes("help")) {
+      // if (event.request.url.includes("help")) {
+      //   return cache.match("/offline.html");
+      // }
+      if (event.request.headers.get("accept").includes("text/html")) {
         return cache.match("/offline.html");
       }
       return cache.match(event.request);
