@@ -1,3 +1,5 @@
+importScripts("/src/js/idb.js");
+
 const CACHE_STATIC_NAME = "static-v6";
 
 // triggered by web browser
@@ -9,7 +11,9 @@ self.addEventListener("install", (event) => {
     // this is like url not paths
     return cache.addAll([
       "/",
-      "/src/js/",
+      "/src/js/app.js",
+      "/src/js/feed.js",
+      "/src/js/idb.js",
       "/src/js/material.min.js",
       "/src/css/",
       "/src/images/main-image.jpg",
@@ -24,6 +28,14 @@ self.addEventListener("install", (event) => {
 
   //register cach async
   event.waitUntil(preCache());
+});
+
+// Access indexDB
+//open indexDb and create db posts-store, version and callback
+const dbPromise = idb.open("posts-store", 1, (db) => {
+  if (!db.objectStoreNames.contains("posts")) {
+    db.createObjectStore("posts", { keyPath: "id" });
+  }
 });
 
 //function for removing old items in cache
@@ -123,6 +135,7 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 //   // used for only this url
 //   if (e.request.url.indexOf(url) > -1) {
 //     e.respondWith(
+//       // save in cache
 //       caches.open("dynamic").then((cache) => {
 //         return fetch(e.request).then((res) => {
 //           // delete oldest cached items
@@ -150,26 +163,44 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 
 // Network with cache fallback
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
+  const url =
+    "https://pwa-service-worker-6baa3-default-rtdb.europe-west1.firebasedatabase.app/postshttps://httpbin.org/get";
+  // used for only this url
+  if (e.request.url.indexOf(url) > -1) {
+    event.respondWith(
+      fetch(event.request).then((res) => {
         // with dynamic cache
         return caches.open("dynamic").then((cache) => {
           cache.put(event.request.url, res.clone());
           return res;
         });
       })
-      .catch((e) => {
-        console.log("ERROR FETCHING", e);
-        return caches.open(CACHE_STATIC_NAME).then((cache) => {
-          console.log(event.request.url);
-          if (event.request.url.includes("help")) {
-            return cache.match("/offline.html");
-          }
-          return cache.match(event.request);
-        });
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(function (response) {
+        if (response) {
+          return response;
+        } else {
+          return fetch(event.request)
+            .then(function (res) {
+              return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+                // trimCache(CACHE_DYNAMIC_NAME, 3);
+                cache.put(event.request.url, res.clone());
+                return res;
+              });
+            })
+            .catch(function (err) {
+              return caches.open(CACHE_STATIC_NAME).then(function (cache) {
+                if (event.request.headers.get("accept").includes("text/html")) {
+                  return cache.match("/offline.html");
+                }
+              });
+            });
+        }
       })
-  );
+    );
+  }
 });
 
 // cache only
