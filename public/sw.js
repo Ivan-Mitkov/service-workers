@@ -73,7 +73,7 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
     //save a copy of the response in order not to consume it
     console.log("[URL]", event.request.url);
     // delete oldest cached items
-    trimCache("dynamic", 10);
+    // // trimCache("dynamic", 10);
     cache.put(event.request.url, response.clone());
     // return what we get from the net
     return response;
@@ -125,7 +125,7 @@ self.addEventListener("fetch", (e) => {
       caches.open("dynamic").then((cache) => {
         return fetch(e.request).then((res) => {
           // delete oldest cached items
-          trimCache("dynamic", 10);
+          // trimCache("dynamic", 10);
           cache.put(e.request, res.clone());
           return res;
         });
