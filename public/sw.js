@@ -117,59 +117,60 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 // });
 
 // cache first then network
-self.addEventListener("fetch", (e) => {
-  const url = "https://httpbin.org/get";
-  // used for only this url
-  if (e.request.url.indexOf(url) > -1) {
-    e.respondWith(
-      caches.open("dynamic").then((cache) => {
-        return fetch(e.request).then((res) => {
-          // delete oldest cached items
-          // trimCache("dynamic", 10);
-          cache.put(e.request, res.clone());
-          return res;
-        });
-      })
-    );
-  } else {
-    e.respondWith(
-      caches.match(e.request).then((response) => {
-        //if in cache return from cache
-        if (response) {
-          return response;
-          // else fetch data from net
-        } else {
-          console.log("[HERE]");
-          return fetchAndSaveIntoDynamicCache(e);
-        }
-      })
-    );
-  }
-});
-
-// Network with cache fallback
-// self.addEventListener("fetch", (event) => {
-//   event.respondWith(
-//     fetch(event.request)
-//       .then((res) => {
-//         // with dynamic cache
-//         return caches.open("dynamic").then((cache) => {
-//           cache.put(event.request.url, res.clone());
+// self.addEventListener("fetch", (e) => {
+//   const url =
+//     "https://pwa-service-worker-6baa3-default-rtdb.europe-west1.firebasedatabase.app/postshttps://httpbin.org/get";
+//   // used for only this url
+//   if (e.request.url.indexOf(url) > -1) {
+//     e.respondWith(
+//       caches.open("dynamic").then((cache) => {
+//         return fetch(e.request).then((res) => {
+//           // delete oldest cached items
+//           // trimCache("dynamic", 10);
+//           cache.put(e.request, res.clone());
 //           return res;
 //         });
 //       })
-//       .catch((e) => {
-//         console.log("ERROR FETCHING", e);
-//         return caches.open(CACHE_STATIC_NAME).then((cache) => {
-//           console.log(event.request.url);
-//           if (event.request.url.includes("help")) {
-//             return cache.match("/offline.html");
-//           }
-//           return cache.match(event.request);
-//         });
+//     );
+//   } else {
+//     e.respondWith(
+//       caches.match(e.request).then((response) => {
+//         //if in cache return from cache
+//         if (response) {
+//           return response;
+//           // else fetch data from net
+//         } else {
+//           console.log("[HERE]");
+//           return fetchAndSaveIntoDynamicCache(e);
+//         }
 //       })
-//   );
+//     );
+//   }
 // });
+
+// Network with cache fallback
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        // with dynamic cache
+        return caches.open("dynamic").then((cache) => {
+          cache.put(event.request.url, res.clone());
+          return res;
+        });
+      })
+      .catch((e) => {
+        console.log("ERROR FETCHING", e);
+        return caches.open(CACHE_STATIC_NAME).then((cache) => {
+          console.log(event.request.url);
+          if (event.request.url.includes("help")) {
+            return cache.match("/offline.html");
+          }
+          return cache.match(event.request);
+        });
+      })
+  );
+});
 
 // cache only
 // self.addEventListener("fetch", (e) => {
