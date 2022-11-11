@@ -98,34 +98,46 @@ fetch(url)
     return res.json();
   })
   .then(function (data) {
-    console.log("NET data", data);
     networkDataReceived = true;
     const dataArray = [];
     for (let key in data) {
       dataArray.push(data[key]);
     }
+    console.log("fetch data from the net");
     updateUi(dataArray);
   });
 // fetch data from cache
-console.log("caches" in window);
-if ("caches" in window) {
-  console.log(caches);
-  caches
-    .match(url)
-    .then((res) => {
-      if (res) {
-        return res.json();
-      }
-      return res;
-    })
-    .then((data) => {
-      console.log("From cache", data);
-      if (!networkDataReceived) {
-        const dataArray = [];
-        for (let key in data) {
-          dataArray.push(data[key]);
-        }
-        updateUi(dataArray);
-      }
-    });
+// if ("caches" in window) {
+//   caches
+//     .match(url)
+//     .then((res) => {
+//       if (res) {
+//         return res.json();
+//       }
+//       return res;
+//     })
+//     .then((data) => {
+//       console.log("From cache", data);
+//       if (!networkDataReceived) {
+//         const dataArray = [];
+//         for (let key in data) {
+//           dataArray.push(data[key]);
+//         }
+//         updateUi(dataArray);
+//       }
+//     });
+// }
+
+//get data form indexDB
+console.log("indexedDB" in window);
+if ("indexedDB" in window) {
+  console.log("HERE");
+  readDataFromIndexDB("posts").then((data) => {
+    console.log(data);
+    if (!networkDataReceived) {
+      // if no network get data from indexDB
+      console.log("from indexDB", data);
+      updateUi(data);
+    }
+  });
 }

@@ -1,6 +1,7 @@
 importScripts("/src/js/idb.js");
+importScripts("/src/js/indexDButility.js");
 
-const CACHE_STATIC_NAME = "static-v6";
+const CACHE_STATIC_NAME = "static-v8";
 const CACHE_DYNAMIC_NAME = "dynamic";
 
 // triggered by web browser
@@ -31,14 +32,14 @@ self.addEventListener("install", (event) => {
   event.waitUntil(preCache());
 });
 
-// Access indexDB
+// Access indexDB import from indexDButility
 //open indexDb and create db posts-store, version and callback
-const dbPromise = idb.open("posts-store", 1, (db) => {
-  if (!db.objectStoreNames.contains("posts")) {
-    // create store with the name posts and primary key id
-    db.createObjectStore("posts", { keyPath: "id" });
-  }
-});
+// const dbPromise = idb.open("posts-store", 1, (db) => {
+//   if (!db.objectStoreNames.contains("posts")) {
+//     // create store with the name posts and primary key id
+//     db.createObjectStore("posts", { keyPath: "id" });
+//   }
+// });
 
 //function for removing old items in cache
 async function trimCache(cacheName, maxItems) {
@@ -166,21 +167,21 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 const fetchAndSaveInIndexDB = async (event) => {
   try {
     const response = await fetch(event.request);
-    console.log(response);
     const clonedResponse = response.clone();
     const data = await clonedResponse.json();
 
     for (let key in data) {
-      dbPromise.then((db) => {
-        //create transaction
-        const transaction = db.transaction("posts", "readwrite");
-        //open store
-        const store = transaction.objectStore("posts");
-        //save in store
-        store.put(data[key]);
-        //close transaction
-        return transaction.complete;
-      });
+      writeDataInIndexDB("posts", data[key]);
+      // dbPromise.then((db) => {
+      //   //create transaction
+      //   const transaction = db.transaction("posts", "readwrite");
+      //   //open store
+      //   const store = transaction.objectStore("posts");
+      //   //save in store
+      //   store.put(data[key]);
+      //   //close transaction
+      //   return transaction.complete;
+      // });
     }
     return response;
   } catch (error) {
