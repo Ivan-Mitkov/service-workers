@@ -1,6 +1,7 @@
 importScripts("/src/js/idb.js");
 
 const CACHE_STATIC_NAME = "static-v6";
+const CACHE_DYNAMIC_NAME = "dynamic";
 
 // triggered by web browser
 self.addEventListener("install", (event) => {
@@ -34,6 +35,7 @@ self.addEventListener("install", (event) => {
 //open indexDb and create db posts-store, version and callback
 const dbPromise = idb.open("posts-store", 1, (db) => {
   if (!db.objectStoreNames.contains("posts")) {
+    // create store with the name posts and primary key id
     db.createObjectStore("posts", { keyPath: "id" });
   }
 });
@@ -63,7 +65,7 @@ self.addEventListener("activate", function (e) {
     caches.keys().then((keysList) => {
       return Promise.all(
         keysList.map((key) => {
-          if (key !== CACHE_STATIC_NAME && key !== "dynamic") {
+          if (key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
             caches.delete(key);
           }
         })
@@ -78,7 +80,7 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
     // fetch new data
     const response = await fetch(event.request);
     // create new cache and call it dynamic
-    const cache = await caches.open("dynamic");
+    const cache = await caches.open(CACHE_DYNAMIC_NAME);
     console.log("fetchAndSaveIntoDynamicCache", cache);
     //save a copy of the response with key url and value the response
     //Clone is needed because put() consumes the response body
@@ -161,20 +163,59 @@ const fetchAndSaveIntoDynamicCache = async (event) => {
 //   }
 // });
 
+const fetchAndSaveInIndexDB = async (event) => {
+  try {
+    const response = await fetch(event.request);
+    console.log(response);
+    const clonedResponse = response.clone();
+    const data = await clonedResponse.json();
+
+    for (let key in data) {
+      dbPromise.then((db) => {
+        //create transaction
+        const transaction = db.transaction("posts", "readwrite");
+        //open store
+        const store = transaction.objectStore("posts");
+        //save in store
+        store.put(data[key]);
+        //close transaction
+        return transaction.complete;
+      });
+    }
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
 // Network with cache fallback
 self.addEventListener("fetch", (event) => {
   const url =
-    "https://pwa-service-worker-6baa3-default-rtdb.europe-west1.firebasedatabase.app/postshttps://httpbin.org/get";
+    "https://pwa-service-worker-6baa3-default-rtdb.europe-west1.firebasedatabase.app/posts.json";
   // used for only this url
-  if (e.request.url.indexOf(url) > -1) {
+  if (event.request.url.indexOf(url) > -1) {
+    // fetchAndSaveIntoDynamicCache(event);
     event.respondWith(
-      fetch(event.request).then((res) => {
-        // with dynamic cache
-        return caches.open("dynamic").then((cache) => {
-          cache.put(event.request.url, res.clone());
-          return res;
-        });
-      })
+      // fetch(event.request).then((res) => {
+      //   const clonedResponse = res.clone();
+      //   clonedResponse.json().then((data) => {
+      //     console.log(data);
+      //     for (let key in data) {
+      //       //access db
+      //       dbPromise.then((db) => {
+      //         //create transaction
+      //         const tx = db.transaction("posts", "readwrite");
+      //         //open store
+      //         const store = tx.objectStore("posts");
+      //         store.put(data[key]);
+      //         //close transaction
+      //         return tx.complete;
+      //       });
+      //     }
+      //   });
+
+      //   return res;
+      // })
+      fetchAndSaveInIndexDB(event)
     );
   } else {
     event.respondWith(
